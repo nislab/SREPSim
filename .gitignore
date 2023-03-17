@@ -1,0 +1,5 @@
+/srep_simulator.egg-info/
+**/__pycache__
+/.mypy_cache/
+/failed_graphs/
+*.pickle
