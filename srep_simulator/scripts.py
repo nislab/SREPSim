@@ -18,12 +18,15 @@ import scipy
 import networkx as nx
 import numpy as np
 import pandas as pd
+
+import srep_simulator.tvg as tvg
+
 from scipy.stats import norm
 
 from typing import List, Tuple, Dict, Set, Any
 from tqdm import tqdm
 
-from srep_simulator.srep import SREPSimulator, me_srep_analytic
+from srep_simulator.srep import SREPSimulator, SREPSimulator_tvg, me_srep_analytic
 from srep_simulator.aux import gen_all_n_vertex_graphs, \
     count_all_n_vertex_graphs, assign_diffs_from_set_sizes, mut_diff_from_asgn
 
@@ -428,31 +431,61 @@ def analytical_large_net(
 def sim_tvg(
         net_sizes: List[int] = list(range(20)),
         avg_degs: List[int] = [1],
-        reps: int = 1000,
-        S: scipy.stats.rv_continuous = scipy.stats.maxwell(**{'loc': 15401.20304028427,
-                                                              'scale': 15920.396446893377}),
-        psi: float = 0.355):
+        reps: int = 1000):
 
     for ns in net_sizes:
         records: List[Dict[str, Any]] = []
         timer_list = []
         for deg in tqdm(avg_degs):
             for rep in range(reps):
-                sim = SREPSimulator(ws_nkp=(ns, deg, 0.24),
-                                    trace_file='/dev/null',
-                                    tvg_applied=True)
+                sim = SREPSimulator_tvg(ws_nkp=(ns, deg, 0.24),
+                                    trace_file='/dev/null')
                 sim.run(timeout=0)
                 stats = sim.get_stats()
 
                 record = {'stats': stats,
                           'network_size': ns,
-                          'avg_deg': deg,
                           'rep': rep}
                 records.append(record)
                 timer_list.append(record['stats'].end_timer)
 
                 del sim
                 gc.collect()
+        mean = np.mean(timer_list)
+        stddev = np.std(timer_list)
+
+        z = norm.ppf(0.975)
+        interval = [mean - z * (stddev / np.sqrt(reps)), mean + z * (stddev / np.sqrt(reps))]
+        print("Average time:", mean)
+        print("Confidence Interval:", interval)
+        with open("data.txt", "a") as file:
+            file.write("{} {} {}\n".format(ns, mean, interval))
+
+    sfx = uuid.uuid4().hex[:8]
+    f_n = f"analytical_large_net_{sfx}.pickle"
+    with open(f_n, "wb") as f:
+        pickle.dump(records, f)
+
+def sim_tvl(net_sizes: List[int] = list(range(20)),
+            reps: int = 1000):
+    for ns in net_sizes:
+        records: List[Dict[str, Any]] = []
+        timer_list = []
+        graph, time_arr = tvg.generate_tvl(ns)
+        for rep in range(reps):
+            sim = SREPSimulator_tvg(network=graph, time_stamp=time_arr,
+                                trace_file='/dev/null')
+            sim.run(timeout=0)
+            stats = sim.get_stats()
+
+            record = {'stats': stats,
+                        'network_size': ns,
+                        'rep': rep}
+            records.append(record)
+            timer_list.append(record['stats'].end_timer)
+
+            del sim
+            gc.collect()
         mean = np.mean(timer_list)
         stddev = np.std(timer_list)
 

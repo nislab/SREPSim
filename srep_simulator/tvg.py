@@ -49,7 +49,7 @@ def generate_tvg(ws_nkp: Tuple[float, float, float]) -> Tuple[nx.Graph, np.ndarr
     return graph, stamp_arr
 
 
-def generate_tvl(ws_nkp: Tuple[float, float, float]) -> Tuple[nx.Graph, np.ndarray]:
+def generate_tvl(net_size) -> Tuple[nx.Graph, np.ndarray]:
     """
     Generate time-varying line
 
@@ -63,8 +63,7 @@ def generate_tvl(ws_nkp: Tuple[float, float, float]) -> Tuple[nx.Graph, np.ndarr
     stamp_arr: dict
         list of time slots when edges are connected
     """
-    net_size = ws_nkp[0]
-
+    
     # Create the graph
     graph = nx.Graph()
     graph.add_nodes_from(list(range(net_size)))
