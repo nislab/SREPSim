@@ -1,5 +1,5 @@
 """
-Functions for time-varying graph extension
+Utils for time-varying graph extension
 
 Author: Xingyu Chen <chxy517@bu.edu>
 Date: August, 2023.
@@ -19,6 +19,9 @@ def generate_tvg(ws_nkp: Tuple[float, float, float]) -> Tuple[nx.Graph, np.ndarr
     --------
     ws_nkp: Tuple[float, float, float]
         set of parameters
+
+    stamp_arr: dict
+        list of time slots when edges are connected
     """
     # Create the graph
     net_size = ws_nkp[0]
@@ -56,6 +59,9 @@ def generate_tvl(ws_nkp: Tuple[float, float, float]) -> Tuple[nx.Graph, np.ndarr
     --------
     ws_nkp: Tuple[float, float, float]
         set of parameters
+
+    stamp_arr: dict
+        list of time slots when edges are connected
     """
     net_size = ws_nkp[0]
 
@@ -77,30 +83,12 @@ def generate_tvl(ws_nkp: Tuple[float, float, float]) -> Tuple[nx.Graph, np.ndarr
     
     return graph, stamp_arr
 
-def check_connection_exp(array, time):
-    # Check if the connection state of an edge needs to be changed
-    # Return true if change needed, false if stays same
-    sorted_array = sorted(array)
-    # Find the two indexes where time falls in between
-    # Apply binary search
-    left_index = 0
-    right_index = len(sorted_array) - 1
-    while left_index <= right_index:
-        mid_index = (left_index + right_index) // 2
-        mid_value = sorted_array[mid_index]
-
-        if mid_value == time:
-            return mid_index, mid_index + 1
-        elif mid_value < time:
-            left_index = mid_index + 1
-        else:
-            right_index = mid_index - 1
-    if right_index % 2 == 1:
-        return False
-    else:
-        return True
-
 def check_connection(array, time):
+    """
+    Check if the given edge is connected
+
+    Return true if connected, vic versa
+    """
     if time in array:
         return True
     else:
@@ -108,6 +96,9 @@ def check_connection(array, time):
 
 
 def update_graph(graph, time_stamp, current_time) -> nx.Graph:
+    """
+    Update the connection status of the graph according to time stamps
+    """
     for edge, time_arr in  time_stamp.items():
         node1 = edge[0]
         node2 = edge[1]
