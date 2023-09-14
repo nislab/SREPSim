@@ -429,7 +429,7 @@ def analytical_large_net(
         pickle.dump(records, f)
 
 def sim_tvg(
-        net_sizes: List[int] = list(range(20)),
+        net_sizes: List[int] = list(range(2, 20)),
         avg_degs: List[int] = [1],
         reps: int = 1000):
 
@@ -466,13 +466,13 @@ def sim_tvg(
     with open(f_n, "wb") as f:
         pickle.dump(records, f)
 
-def sim_tvl(net_sizes: List[int] = list(range(20)),
+def sim_tvl(net_sizes: List[int] = list(range(2, 20)),
             reps: int = 1000):
     for ns in net_sizes:
         records: List[Dict[str, Any]] = []
         timer_list = []
-        graph, time_arr = tvg.generate_tvl(ns)
         for rep in range(reps):
+            graph, time_arr = tvg.generate_tvl(ns)
             sim = SREPSimulator_tvg(network=graph, time_stamp=time_arr,
                                 trace_file='/dev/null')
             sim.run(timeout=0)
@@ -502,4 +502,6 @@ def sim_tvl(net_sizes: List[int] = list(range(20)),
         pickle.dump(records, f)
 
 def overnight():
-    sim_experiments()
+    sim_tvl()
+
+overnight()
