@@ -42,3 +42,9 @@ sim.run()
 ```
 
 See the in-source documentation.
+
+## Acknowledgements
+
+This work was supported in part by:
++ The National Science Foundation
++ The Red Hat Collaboratory at Boston University
