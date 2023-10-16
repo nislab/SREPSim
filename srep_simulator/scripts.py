@@ -429,7 +429,7 @@ def analytical_large_net(
         pickle.dump(records, f)
 
 def sim_tvg(
-        net_sizes: List[int] = list(range(2, 20)),
+        net_sizes: List[int] = list(range(2, 10)),
         avg_degs: List[int] = [1],
         reps: int = 1000):
 
@@ -502,6 +502,6 @@ def sim_tvl(net_sizes: List[int] = list(range(2, 20)),
         pickle.dump(records, f)
 
 def overnight():
-    sim_tvl()
+    sim_tvg()
 
 overnight()

@@ -73,7 +73,7 @@ def generate_tvl(net_size) -> Tuple[nx.Graph, np.ndarray]:
 
     stamp_arr = {}
     for i in range (net_size - 1):
-        bool_array = np.random.choice([True, False], size=1000, p=[prob_con, prob_discon])
+        bool_array = np.random.choice([True, False], size=10000, p=[prob_con, prob_discon])
         array = []
         for index in range(0, 1000):
             if bool_array[index]:
