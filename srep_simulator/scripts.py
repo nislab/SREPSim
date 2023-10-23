@@ -29,7 +29,7 @@ from tqdm import tqdm
 from srep_simulator.srep import SREPSimulator, SREPSimulator_tvg, me_srep_analytic
 from srep_simulator.aux import gen_all_n_vertex_graphs, \
     count_all_n_vertex_graphs, assign_diffs_from_set_sizes, mut_diff_from_asgn
-
+from concurrent.futures import ProcessPoolExecutor
 
 def theorem_2_for_big_graphs(graph_sizes: List[int] = [9, 10]) -> None:
     """Run theorem 2 validation for huge graphs."""
@@ -466,7 +466,50 @@ def sim_tvg(
     with open(f_n, "wb") as f:
         pickle.dump(records, f)
 
-def sim_tvl(net_sizes: List[int] = list(range(2, 20)),
+def run_simulation(ns, deg, rep):
+    sim = SREPSimulator_tvg(ws_nkp=(ns, deg, 0.24), trace_file='/dev/null')
+    sim.run(timeout=0)
+    stats = sim.get_stats()
+    record = {'stats': stats, 'network_size': ns, 'rep': rep}
+    return record
+
+def sim_tvg_multi(
+        net_sizes: List[int] = list(range(2, 10)),
+        avg_degs: List[int] = [1],
+        reps: int = 1000):
+
+    for ns in net_sizes:
+        records: List[Dict[str, Any]] = []
+        timer_list = []
+
+        with ProcessPoolExecutor() as executor:
+            future_to_record = {executor.submit(run_simulation, ns, deg, rep): (ns, deg, rep) for deg in avg_degs for rep in range(reps)}
+            for future in tqdm(concurrent.futures.as_completed(future_to_record), total=reps*len(avg_degs)):
+                ns, deg, rep = future_to_record[future]
+                try:
+                    record = future.result()
+                except Exception as exc:
+                    print(f"Generated an exception: {exc}")
+                else:
+                    records.append(record)
+                    timer_list.append(record['stats'].end_timer)
+
+        mean = np.mean(timer_list)
+        stddev = np.std(timer_list)
+        z = norm.ppf(0.975)
+        interval = [mean - z * (stddev / np.sqrt(reps)), mean + z * (stddev / np.sqrt(reps))]
+        print("Average time:", mean)
+        print("Confidence Interval:", interval)
+        with open("data.txt", "a") as file:
+            file.write("{} {} {}\n".format(ns, mean, interval))
+
+    sfx = uuid.uuid4().hex[:8]
+    f_n = f"analytical_large_net_{sfx}.pickle"
+    with open(f_n, "wb") as f:
+        pickle.dump(records, f)
+
+
+def sim_tvl(net_sizes: List[int] = list(range(2, 10)),
             reps: int = 1000):
     for ns in net_sizes:
         records: List[Dict[str, Any]] = []
@@ -502,6 +545,6 @@ def sim_tvl(net_sizes: List[int] = list(range(2, 20)),
         pickle.dump(records, f)
 
 def overnight():
-    sim_tvg()
+    sim_tvg_multi()
 
 overnight()
